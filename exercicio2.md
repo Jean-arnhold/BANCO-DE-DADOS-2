@@ -1,0 +1,2 @@
+## Você é o responsável pelo banco de dados de uma empresa e percebeu que a tabela funcionarios possui os nomes dos departamentos diretamente inseridos nela. Você identifica que seria interessante ter uma tabela para armazenar as informações dos departamentos e na tabela funcionarios apenas fazer referência ao dados desta nova tabela. Crie um script para fazer todas as alterações necessárias. O script deve estar em um único arquivo que será importado para realizar todas as alterações.
+
