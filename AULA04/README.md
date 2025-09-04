@@ -1,4 +1,4 @@
-## LISTA 1
+# LISTA 1
 
 ## 1-Criar uma função que recebe a data de nascimento do funcionário e retorna a idade do funcionário. Dica: procurar funções de data(date) do MySQL pode ajudar.
 
@@ -48,7 +48,7 @@ dependentes_funcionario(funcionario.Cpf) as dependentes
 FROM funcionario;
 ```
 
-## LISTA 2
+# LISTA 2
 
 ## 1. Crie a função TotalHoras para retornar o total de horas que um funcionário trabalha. O parâmetro de entrada da função deve ser o cpf do funcionário. A função deve retornar o total de horas que o funcionário trabalha (tabela trabalha_em).
 
@@ -108,3 +108,97 @@ WHERE
 	departamento.Dnome= nome_departamento);
 ```
 
+# LISTA 3
+
+## 1-Criar uma função que recebe o CPF do funcionário e retorna o valor do aumento do funcionário. Se a soma de horas trabalhadas em projetos pelo funcionário for maior ou igual a 40, o aumento deve ser de 20%. Caso contrário o aumento deve ser de 5%.
+
+```sql
+DELIMITER //
+
+CREATE FUNCTION calcular_aumento(cpf_funcionario VARCHAR(11)) 
+RETURNS DECIMAL(5,2)
+BEGIN
+    DECLARE total_horas INT;
+    DECLARE percentual_aumento DECIMAL(5,2);
+    
+    -- Calcula a soma total de horas trabalhadas em projetos
+    SELECT COALESCE(SUM(te.Horas), 0) INTO total_horas
+    FROM trabalha_em te
+    INNER JOIN funcionario f ON te.Fcpf = f.Cpf
+    WHERE f.cpf = cpf_funcionario;
+    
+    IF total_horas >= 40 THEN
+        SET percentual_aumento = 20.00;
+    ELSE
+        SET percentual_aumento = 5.00;
+    END IF;
+    
+    RETURN percentual_aumento;
+END //
+
+DELIMITER ;
+```
+
+## 2-Fazer uma consulta para mostrar o uso da função que retorne o nome do funcionário e seu novo salário.
+
+```sql
+SELECT 
+    f.Pnome,
+    f.cpf,
+    f.salario AS salario_atual,
+    calcular_aumento(f.cpf) AS percentual_aumento,
+    (f.salario * calcular_aumento(f.cpf) / 100) AS valor_aumento,
+    (f.salario + (f.salario * calcular_aumento(f.cpf) / 100)) AS novo_salario
+FROM funcionario f
+ORDER BY percentual_aumento DESC, f.Pnome;
+```
+
+## 3-Criar uma função que recebe três 3 números de projeto como parâmetro e retorna o projeto com mais funcionários trabalhando nele.
+
+```sql
+DELIMITER //
+
+CREATE OR REPLACE FUNCTION projeto_mais_funcionarios(projeto1 INT, projeto2 INT, projeto3 INT) 
+RETURNS INT
+READS SQL DATA
+BEGIN
+    DECLARE projeto_maior INT;
+    DECLARE count1 INT;
+    DECLARE count2 INT;
+    DECLARE count3 INT;
+    
+
+    SELECT COUNT(DISTINCT trabalha_em.Fcpf) INTO count1
+    FROM trabalha_em
+    WHERE Pnr = projeto1;
+    
+    
+    SELECT COUNT(DISTINCT trabalha_em.Fcpf) INTO count2
+    FROM trabalha_em
+    WHERE Pnr = projeto2;
+    
+
+    SELECT COUNT(DISTINCT trabalha_em.Fcpf) INTO count3
+    FROM trabalha_em
+    WHERE Pnr = projeto3;
+    
+
+    IF count1 >= count2 AND count1 >= count3 THEN
+        SET projeto_maior = projeto1;
+    ELSEIF count2 >= count1 AND count2 >= count3 THEN
+        SET projeto_maior = projeto2;
+    ELSE
+        SET projeto_maior = projeto3;
+    END IF;
+    
+    RETURN projeto_maior;
+END //
+
+DELIMITER ;
+```
+
+## 4-Fazer uma consulta para mostrar o uso da função.
+
+```sql
+SELECT projeto_mais_funcionarios(1, 2, 3) AS projeto_maior;
+```
