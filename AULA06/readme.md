@@ -152,3 +152,60 @@ DELIMITER ;
 
 CALL inserir_numeros(5);
 ```
+
+## Exercício 4 - Cursor 1 (listar por setor) Crie uma procedure listar_funcionarios_cursor(p_setor_id) que percorre via cursor os funcionários do setor e exibe nome e salário.
+
+```sql 
+DELIMITER $
+
+CREATE OR REPLACE PROCEDURE listar_funcionarios_cursor(IN p_setor_id INT)
+BEGIN
+    DECLARE v_nome VARCHAR(100);
+    DECLARE v_salario DECIMAL(10,2);
+    DECLARE v_fim INT DEFAULT 0;
+    
+  
+    DECLARE cur_funcionarios CURSOR FOR
+    SELECT nome, salario
+    FROM funcionarios
+    WHERE setor_id = p_setor_id;
+    
+   
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET v_fim = 1;
+    
+   
+    CREATE TEMPORARY TABLE temp_resultados (
+        nome VARCHAR(100),
+        salario DECIMAL(10,2)
+    );
+    
+    
+    OPEN cur_funcionarios;
+    
+    
+    loop_cursor: LOOP
+        FETCH cur_funcionarios INTO v_nome, v_salario;
+        
+        IF v_fim = 1 THEN
+            LEAVE loop_cursor;
+        END IF;
+        
+      
+        INSERT INTO temp_resultados VALUES (v_nome, v_salario);
+    END LOOP loop_cursor;
+    
+    
+    CLOSE cur_funcionarios;
+    
+    
+    SELECT * FROM temp_resultados;
+    
+   
+    DROP TEMPORARY TABLE temp_resultados;
+END$
+
+DELIMITER ;
+
+CALL listar_funcionarios_cursor(1);
+```
+
