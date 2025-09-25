@@ -209,3 +209,59 @@ DELIMITER ;
 CALL listar_funcionarios_cursor(1);
 ```
 
+## Exercício 5 – Cursor 2 (ajuste por faixas + log) Crie uma procedure ajustar_salarios_cursor(p_setor_id) que percorre via cursor os funcionários do setor e aplica reajuste salarial como segue: < 3000: +10%; 3000–5000: +5%; > 5000: sem ajuste. Registre mudanças em ajustes_cursor_log.
+
+```sql
+DELIMITER $$
+
+CREATE PROCEDURE ajustar_salarios_cursor(p_setor_id INT)
+BEGIN
+ 
+    DECLARE v_id INT;
+    DECLARE v_salario DECIMAL(10,2);
+    DECLARE v_novo_salario DECIMAL(10,2);
+    DECLARE done INT DEFAULT 0;
+
+    DECLARE cur CURSOR FOR
+        SELECT id, salario
+        FROM funcionarios
+        WHERE setor_id = p_setor_id;
+
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
+
+    OPEN cur;
+
+    read_loop: LOOP
+        FETCH cur INTO v_id, v_salario;
+        IF done = 1 THEN
+            LEAVE read_loop;
+        END IF;
+
+
+        IF v_salario < 3000 THEN
+            SET v_novo_salario = v_salario * 1.10;
+        ELSEIF v_salario BETWEEN 3000 AND 5000 THEN
+            SET v_novo_salario = v_salario * 1.05;
+        ELSE
+            SET v_novo_salario = v_salario;
+        END IF;
+
+        IF v_novo_salario <> v_salario THEN
+            UPDATE funcionarios
+            SET salario = v_novo_salario
+            WHERE id = v_id;
+
+            INSERT INTO ajustes_cursor_log (id_func, salario_antigo, salario_novo, data_ajuste)
+            VALUES (v_id, v_salario, v_novo_salario, NOW());
+        END IF;
+    END LOOP;
+
+    CLOSE cur;
+END$$
+
+DELIMITER ;
+
+CALL ajustar_salarios_cursor(1);
+
+
+```
